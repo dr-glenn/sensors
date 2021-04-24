@@ -10,7 +10,26 @@ from digitalio import DigitalInOut, Direction, Pull
 from adafruit_pm25.i2c import PM25_I2C
 import datetime as dt
 
-def get_device():
+SensorValue = {}   # define various sensors
+# unit, display format
+SensorValue['temp_c'] = ('temperature', 'C', '0.1f')
+SensorValue['rel_hum'] = ('relative humidity', '%', '0.1f')
+SensorValue['pressure'] = ('pressure', 'hPa', '0.1f')
+SensorValue['altitude'] = ('altitude', 'meters', '0.1f')
+SensorValue['pm10 standard'] = ('PM1.0 standard', '', 'd')
+SensorValue['pm25 standard'] = ('PM2.5 standard', '', 'd')
+SensorValue['pm100 standard'] = ('PM10.0 standard', '', 'd')
+SensorValue['pm10 env'] = ('PM1.0 env', '', 'd')
+SensorValue['pm25 env'] = ('PM2.5 env', '', 'd')
+SensorValue['pm100 env'] = ('PM10.0 env', '', 'd')
+SensorValue['particles 03um'] = ('Particles > 0.3um', '', 'd')
+SensorValue['particles 05um'] = ('Particles > 0.5um', '', 'd')
+SensorValue['particles 10um'] = ('Particles > 1.0um', '', 'd')
+SensorValue['particles 25um'] = ('Particles > 2.5um', '', 'd')
+SensorValue['particles 50um'] = ('Particles > 5.0um', '', 'd')
+SensorValue['particles 100um'] = ('Particles > 10 um', '', 'd')
+
+def get_device(name='pi'):
     reset_pin = None
     # If you have a GPIO, its not a bad idea to connect it to the RESET pin
     # reset_pin = DigitalInOut(board.G0)
@@ -43,7 +62,7 @@ def get_device():
     # Connect to a PM2.5 sensor over I2C
     pm25 = PM25_I2C(i2c, reset_pin)
 
-    return pm25
+    return name,pm25
 
 def get_keys(device, known=True):
     '''
@@ -67,6 +86,17 @@ def get_keys(device, known=True):
     else:
         keys = [key for key in device]
     return keys
+
+def printall(aqdata):
+    '''
+    print data, for testing
+    '''
+    dt_now = dt.datetime.now()
+    print("{}".format(dt_now))
+    for key in aqdata:
+        # SensorValue['pm10 env'] = ('PM1.0 env', '', 'd')
+        sens = SensorValue[key]
+        print('{0}: {1:{2}} {3}'.format(sens[0],aqdata[key],sens[2],sens[1]))
 
 def printit(aqdata):
     '''
@@ -96,13 +126,13 @@ def printit(aqdata):
     print("---------------------------------------")
 
 if __name__ == '__main__':
-    pm25 = get_device()
-    print("Found PM2.5 sensor, reading data...")
+    name,pm25 = get_device()
+    print("Found PM2.5 sensor on {}, reading data...".format(name))
     while True:
         try:
             aqdata = pm25.read()
             # print(aqdata)
-            printit(aqdata)
+            printall(aqdata)
         except RuntimeError:
             print("Unable to read from sensor, retrying...")
             continue

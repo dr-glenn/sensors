@@ -7,8 +7,9 @@ import pm25
 import bme280
 
 if __name__ == '__main__':
-    dev_bme280 = bme280.get_device()
-    bme280.printit(dev_bme280)
-    dev_pm25 = pm25.get_device()
-    aqdata = dev_pm25.read()
-    pm25.printit(aqdata)
+    bme_name,bme_vals = bme280.get_values()
+    bme280.printit(bme_name,bme_vals)
+    pm25_name,pm25_dev = pm25.get_device()
+    aqdata = pm25_dev.read()
+    #pm25.printit(aqdata)
+    pm25.printall(aqdata)
