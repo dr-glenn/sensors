@@ -5,8 +5,7 @@ broker="broker.hivemq.com"
 broker="test.mosquitto.org"
 MQTT_PORT = 1883
 
-import bme280
-import pm25
+from pi_devices import bme280, pm25
 
 BME_NAME = 'pi_zero/bme280'
 PM25_NAME = 'pi_zero/pm25'

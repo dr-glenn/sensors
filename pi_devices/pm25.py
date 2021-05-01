@@ -9,25 +9,57 @@ import busio
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_pm25.i2c import PM25_I2C
 import datetime as dt
+from device import Device
 
-SensorValue = {}   # define various sensors
-# unit, display format
-SensorValue['temp_c'] = ('temperature', 'C', '0.1f')
-SensorValue['rel_hum'] = ('relative humidity', '%', '0.1f')
-SensorValue['pressure'] = ('pressure', 'hPa', '0.1f')
-SensorValue['altitude'] = ('altitude', 'meters', '0.1f')
-SensorValue['pm10 standard'] = ('PM1.0 standard', '', 'd')
-SensorValue['pm25 standard'] = ('PM2.5 standard', '', 'd')
-SensorValue['pm100 standard'] = ('PM10.0 standard', '', 'd')
-SensorValue['pm10 env'] = ('PM1.0 env', '', 'd')
-SensorValue['pm25 env'] = ('PM2.5 env', '', 'd')
-SensorValue['pm100 env'] = ('PM10.0 env', '', 'd')
-SensorValue['particles 03um'] = ('Particles > 0.3um', '', 'd')
-SensorValue['particles 05um'] = ('Particles > 0.5um', '', 'd')
-SensorValue['particles 10um'] = ('Particles > 1.0um', '', 'd')
-SensorValue['particles 25um'] = ('Particles > 2.5um', '', 'd')
-SensorValue['particles 50um'] = ('Particles > 5.0um', '', 'd')
-SensorValue['particles 100um'] = ('Particles > 10 um', '', 'd')
+class PM25(Device):
+    dev_name = 'pm25'
+    sensor_def = {}   # define various sensors
+    # unit, display format
+    sensor_def['pm10 standard'] = ('PM1.0 standard', '', 'd')
+    sensor_def['pm25 standard'] = ('PM2.5 standard', '', 'd')
+    sensor_def['pm100 standard'] = ('PM10.0 standard', '', 'd')
+    sensor_def['pm10 env'] = ('PM1.0 env', '', 'd')
+    sensor_def['pm25 env'] = ('PM2.5 env', '', 'd')
+    sensor_def['pm100 env'] = ('PM10.0 env', '', 'd')
+    sensor_def['particles 03um'] = ('Particles > 0.3um', '', 'd')
+    sensor_def['particles 05um'] = ('Particles > 0.5um', '', 'd')
+    sensor_def['particles 10um'] = ('Particles > 1.0um', '', 'd')
+    sensor_def['particles 25um'] = ('Particles > 2.5um', '', 'd')
+    sensor_def['particles 50um'] = ('Particles > 5.0um', '', 'd')
+    sensor_def['particles 100um'] = ('Particles > 10 um', '', 'd')
+    def __init__(self, sys_name):
+        super().__init__(sys_name)
+        name, self.device = get_device(sys_name)
+
+    @classmethod
+    def get_sensor_keys(cls):
+        return list(cls.sensor_def.keys())
+
+    def read(self):
+        '''
+        Read sensor with Adafruit package.
+        aqdata is a dict; see sensor_def for keys
+        '''
+        self.aqdata = self.device.read()
+
+    def get_values(self):
+        name, self.values = self.read()
+
+    def get_str_value(self, key, value):
+        '''
+        Format sensor value according to sensor_def.
+        :param key: name of value, e.g., temp_c
+        :param value: numeric value from the sensor
+        :return: example: '15.0 C' for temperature
+        '''
+        strValue = '{0:{1}} {2}'.format(value, self.sensor_def[key][2], self.sensor_def[key][1])
+        return strValue
+
+    def printall(self):
+        # iterate over all values returned from device
+        for v in self.values:
+            sens_form = self.sensor_def[v]
+            print('{}: {}'.format(sens_form[0], self.get_str_value(v,self.values[v])))
 
 def get_device(name='pi'):
     reset_pin = None
