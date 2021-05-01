@@ -7,8 +7,8 @@ broker="broker.hivemq.com"
 broker="test.mosquitto.org"
 MQTT_PORT = 1883
 
-BME_NAME = 'pi/bme280'
-PM25_NAME = 'pi/pm25'
+BME_NAME = 'pi_zero/bme280'
+PM25_NAME = 'pi_zero/pm25'
 
 # callbacks for mqtt
 def on_connect(client, userdata, flags, rc):

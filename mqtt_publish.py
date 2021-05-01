@@ -17,7 +17,7 @@ def on_connect(client, userdata, flags, rc):
     # so that if connection is lost, subscription will get renewed.
     client.subscribe(BME_NAME)
     client.subscribe(PM25_NAME)
-    #client.subscribe("$SYS/#")
+    #client.subscribe("$SYS/#") # some interesting things
 
 def on_publish(client, userdata, mID):
     print("publish msg ID=%d"%(int(mID)))
@@ -34,8 +34,10 @@ client.on_publish = on_publish #assign function to callback
 client.on_message=on_message
 
 #####
-bme_name,bme280_dev = bme280.get_device()
-pm25_name,pm25_dev = pm25.get_device()
+#bme_name,bme280_dev = bme280.get_device()
+#pm25_name,pm25_dev = pm25.get_device()
+bme280_dev = bme280.BME280('pi_zero')
+pm25_dev = pm25.PM25('pi_zero')
 
 #####
 print("connecting to broker %s" %broker)
@@ -44,17 +46,21 @@ client.loop_start() #start loop to process received messages
 #print("subscribing ")
 #client.subscribe(BME_NAME)#subscribe
 time.sleep(2)
-print("publishing ")
-temp = bme280_dev.temperature
-humid = bme280_dev.relative_humidity
-press = bme280_dev.pressure
-client.publish(BME_NAME,"%.1f, %.1f%%, %.1fmb" %(float(temp),float(humid),float(press)))
-aqdata = pm25_dev.read()
-#        keys = ['pm10 standard', 'pm25 standard', 'pm100 standard',
-client.publish(PM25_NAME, "PM1.0: {}, PM2.5: {}, PM10.0: {}".format(aqdata['pm10 env'],
-            aqdata['pm25 env'], aqdata['pm100 env']))
 
-time.sleep(4)
+for i in range(5):
+    print("publishing ")
+    #temp = bme280_dev.temperature
+    #humid = bme280_dev.relative_humidity
+    #press = bme280_dev.pressure
+    bme_values = bme280_dev.get_values()
+    temp = bme_values['temp_c']
+    humid = bme_values['rel_hum']
+    press = bme_values['pressure']
+    client.publish(BME_NAME,"%.1f, %.1f%%, %.1fmb" %(float(temp),float(humid),float(press)))
+    aqdata = pm25_dev.get_values()
+    #        keys = ['pm10 standard', 'pm25 standard', 'pm100 standard',
+    client.publish(PM25_NAME, "PM1.0: {}, PM2.5: {}, PM10.0: {}".format(aqdata['pm10 env'],
+                aqdata['pm25 env'], aqdata['pm100 env']))
+
+    time.sleep(5)
 client.disconnect()
-client.loop_stop()
-

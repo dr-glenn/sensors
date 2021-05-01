@@ -9,7 +9,7 @@ import busio
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_pm25.i2c import PM25_I2C
 import datetime as dt
-from device import Device
+from .device import Device
 
 class PM25(Device):
     dev_name = 'pm25'
@@ -41,25 +41,29 @@ class PM25(Device):
         aqdata is a dict; see sensor_def for keys
         '''
         self.aqdata = self.device.read()
+        return self.aqdata
 
     def get_values(self):
-        name, self.values = self.read()
+        self.values = self.read()
+        return self.values
 
-    def get_str_value(self, key, value):
+    @classmethod
+    def get_str_value(cls, key, value):
         '''
         Format sensor value according to sensor_def.
         :param key: name of value, e.g., temp_c
         :param value: numeric value from the sensor
         :return: example: '15.0 C' for temperature
         '''
-        strValue = '{0:{1}} {2}'.format(value, self.sensor_def[key][2], self.sensor_def[key][1])
+        strValue = '{0:{1}} {2}'.format(value, cls.sensor_def[key][2], cls.sensor_def[key][1])
         return strValue
 
-    def printall(self):
+    @classmethod
+    def printall(cls, values):
         # iterate over all values returned from device
-        for v in self.values:
-            sens_form = self.sensor_def[v]
-            print('{}: {}'.format(sens_form[0], self.get_str_value(v,self.values[v])))
+        for v in values:
+            sens_form = cls.sensor_def[v]
+            print('{}: {}'.format(sens_form[0], cls.get_str_value(v,values[v])))
 
 def get_device(name='pi'):
     reset_pin = None
@@ -127,8 +131,8 @@ def printall(aqdata):
     print("{}".format(dt_now))
     for key in aqdata:
         # SensorValue['pm10 env'] = ('PM1.0 env', '', 'd')
-        sens = SensorValue[key]
-        print('{0}: {1:{2}} {3}'.format(sens[0],aqdata[key],sens[2],sens[1]))
+        #sens = SensorValue[key]
+        print('{0}: {1}'.format(key,aqdata[key]))
 
 def printit(aqdata):
     '''

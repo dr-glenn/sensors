@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # BME280 temp/humid/pressure sensor
 
 import board
@@ -5,15 +6,15 @@ import board
 import busio
 import time
 import adafruit_bme280
-from device import Device
+from .device import Device
 
 class BME280(Device):
     dev_name = 'bme280'
     sensor_def = {}   # define various sensors
-    sensor_def['temp_c'] = ('temperature', 'C', '0.1f')
+    sensor_def['temp_c'] = ('temperature', u'\N{DEGREE SIGN}C', '0.1f')
     sensor_def['rel_hum'] = ('relative humidity', '%', '0.1f')
-    sensor_def['pressure'] = ('pressure', 'hPa', '0.1f')
-    sensor_def['altitude'] = ('altitude', 'meters', '0.1f')
+    sensor_def['pressure'] = ('pressure', ' hPa', '0.1f')
+    sensor_def['altitude'] = ('altitude', ' meters', '0.1f')
     def __init__(self, sys_name):
         super().__init__(sys_name)
         name, self.device = get_device(sys_name)
@@ -24,22 +25,25 @@ class BME280(Device):
 
     def get_values(self):
         name, self.values = get_values(self.sys_name, self.device)
+        return self.values
 
-    def get_str_value(self, key, value):
+    @classmethod
+    def get_str_value(cls, key, value):
         '''
         Format sensor value according to sensor_def.
         :param key: name of value, e.g., temp_c
         :param value: numeric value from the sensor
         :return: example: '15.0 C' for temperature
         '''
-        strValue = '{0:{1}} {2}'.format(value, self.sensor_def[key][2], self.sensor_def[key][1])
+        strValue = '{0:{1}}{2}'.format(value, cls.sensor_def[key][2], cls.sensor_def[key][1])
         return strValue
 
-    def printall(self):
+    @classmethod
+    def printall(cls, values):
         # iterate over all values returned from device
-        for v in self.values:
-            sens_form = self.sensor_def[v]
-            print('{}: {}'.format(sens_form[0], self.get_str_value(v,self.values[v])))
+        for v in values:
+            sens_form = cls.sensor_def[v]
+            print('{}: {}'.format(sens_form[0], cls.get_str_value(v,values[v])))
 
 def get_device(name='pi'):
     '''
@@ -82,7 +86,7 @@ def printit(name, values):
     for val_key in values:
         value = values[val_key]
         #val_format = '{} = { %s} {}' %(value[2])    # embed the number format into output format string
-        print('{0} = { 1 {3}} {2}'.format(val_key, value[0], value[1], value[2]))
+        print('{0} = {1}'.format(val_key, value))
     """
     print("\nTemperature: %0.1f C" % bme280.temperature)
     print("Humidity: %0.1f %%" % bme280.relative_humidity)
