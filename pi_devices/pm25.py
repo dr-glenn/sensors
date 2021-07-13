@@ -6,10 +6,18 @@ Example sketch to connect to PM2.5 sensor with either I2C or UART.
 import time
 import board
 import busio
+import RPi.GPIO as GPIO
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_pm25.i2c import PM25_I2C
 import datetime as dt
 from .device import Device
+
+PM25_WAKE_TIME = 25 # PM25 needs to be turned on for this many seconds before ready
+PM25_SET_PIN = 6
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PM25_SET_PIN, GPIO.OUT)
+GPIO.output(PM25_SET_PIN, GPIO.HIGH)
 
 class PM25(Device):
     dev_name = 'pm25'
@@ -27,9 +35,18 @@ class PM25(Device):
     sensor_def['particles 25um'] = ('Particles > 2.5um', '', 'd')
     sensor_def['particles 50um'] = ('Particles > 5.0um', '', 'd')
     sensor_def['particles 100um'] = ('Particles > 10 um', '', 'd')
+
     def __init__(self, sys_name):
         super().__init__(sys_name)
         name, self.device = get_device(sys_name)
+
+    @classmethod
+    def wake(cls):
+        GPIO.output(PM25_SET_PIN, GPIO.HIGH)
+
+    @classmethod
+    def sleep(cls):
+        GPIO.output(PM25_SET_PIN, GPIO.LOW)
 
     @classmethod
     def get_sensor_keys(cls):
@@ -44,7 +61,11 @@ class PM25(Device):
         return self.aqdata
 
     def get_values(self):
-        self.values = self.read()
+        try:
+            self.values = self.read()
+        except:
+            # I once saw a RuntimeError due to PM25 checksum error and program aborted
+            self.values = None
         return self.values
 
     @classmethod
