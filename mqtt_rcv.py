@@ -1,22 +1,39 @@
 import os
 import sys
 import time
+import random
 import paho.mqtt.client as paho
-broker="iot.eclipse.org"
-broker="broker.hivemq.com"
-broker="test.mosquitto.org"
-MQTT_PORT = 1883
+import myconfig as cfg
 
-BME_NAME = 'pi_zero/bme280'
-PM25_NAME = 'pi_zero/pm25'
+ANONYMOUS=False
+if ANONYMOUS:
+    #broker="iot.eclipse.org"
+    #broker="broker.hivemq.com"
+    broker="test.mosquitto.org"
+    MQTT_PORT = 1883
+else:
+    broker = cfg.MQTT_BROKER
+    MQTT_PORT = cfg.MQTT_PORT
+
+#BME_NAME = 'pi_zero/bme280'
+#PM25_NAME = 'pi_zero/pm25'
+
+
+HOME_NAME = 'gn_home'
+SYS_NAME  = 'pi_zero'
+BME_NAME  = 'bme280'
+PM25_NAME = 'pm25'
+
+BME_TOPIC  = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,BME_NAME)
+PM25_TOPIC = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,PM25_NAME)
 
 # callbacks for mqtt
 def on_connect(client, userdata, flags, rc):
-    print("connected with result code: "+str(rc))
+    #print("connected with result code: "+str(rc))
     # subscribe within the on_connect function,
     # so that if connection is lost, subscription will get renewed.
-    client.subscribe(BME_NAME)
-    client.subscribe(PM25_NAME)
+    client.subscribe(BME_TOPIC)
+    client.subscribe(PM25_TOPIC)
     #client.subscribe("$SYS/#")
 
 def on_message(client, userdata, message):
@@ -38,7 +55,13 @@ def main(client, broker, port=MQTT_PORT):
 
 if __name__ == '__main__':
     try:
-        client= paho.Client("gdn-client-002") #create client object
+        client= paho.Client("gdn-client-{:04d}".format(random.randrange(1000))) #create client object
+        if not ANONYMOUS:
+            #client.tls_set(tls_version=paho.ssl.PROTOCOL_TLS)
+            client.tls_set()
+            client.username_pw_set(cfg.MQTT_USERNAME, cfg.MQTT_PASSWORD)
+        else:
+            pass
         ###### Bind functions to callback
         client.on_connect = on_connect
         client.on_message=on_message

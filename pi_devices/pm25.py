@@ -12,7 +12,7 @@ from adafruit_pm25.i2c import PM25_I2C
 import datetime as dt
 from .device import Device
 
-PM25_WAKE_TIME = 25 # PM25 needs to be turned on for this many seconds before ready
+PM25_WAKE_TIME = 30 # PM25 needs to be turned on for this many seconds before ready
 PM25_SET_PIN = 6
 
 GPIO.setmode(GPIO.BCM)
