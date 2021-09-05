@@ -1,6 +1,8 @@
+import platform
 import time
 import random
 import datetime as dt
+import json
 import RPi.GPIO as GPIO
 import paho.mqtt.client as paho
 import I2C_LCD_driver   # for LCD1602 device with backpack
@@ -21,12 +23,15 @@ GPIO.setmode(GPIO.BCM)
 from pi_devices import bme280, pm25
 
 HOME_NAME = 'gn_home'
-SYS_NAME  = 'pi_zero'
+#SYS_NAME  = 'pi_zero'
+SYS_NAME  = platform.node()
 BME_NAME  = 'bme280'
 PM25_NAME = 'pm25'
 
 BME_TOPIC  = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,BME_NAME)
 PM25_TOPIC = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,PM25_NAME)
+BME_TOPIC_JSON = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,BME_NAME+'/J')
+PM25_TOPIC_JSON = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,PM25_NAME+'/J')
 
 # callbacks for mqtt
 def on_connect(client, userdata, flags, rc):
@@ -184,15 +189,24 @@ while True:
     #press = bme280_dev.pressure
     bme_values = bme280_dev.get_values()
     temp = bme_values['temp_c']
+    tempf = temp*1.8 + 32.0
     humid = bme_values['rel_hum']
     press = bme_values['pressure']
-    client.publish(BME_TOPIC,"time={},temp_c={:.1f},humidity={:.1f},pressure={:.1f}".format(
-        tstampStr,float(temp),float(humid),float(press)))
+    temp_str = '{:.1f}'.format(float(temp))
+    tempf_str = '{:.1f}'.format(float(tempf))
+    humid_str = '{:.1f}'.format(float(humid))
+    press_str = '{:.1f}'.format(float(press))
+    client.publish(BME_TOPIC,"time={},temp_c={},humidity={},pressure={}".format(
+        tstampStr,temp_str,humid_str,press_str))
+    bme_json = {'temp_c':temp_str, 'temp_f':tempf_str, 'humidity':humid_str, 'pressure':press_str}
+    client.publish(BME_TOPIC_JSON, json.dumps(bme_json))
     aqdata = pm25_dev.get_values()
     #        keys = ['pm10 standard', 'pm25 standard', 'pm100 standard',
     if aqdata:
         client.publish(PM25_TOPIC, "time={},PM1_0={},PM2_5={},PM10_0={}".format(
             tstampStr,aqdata['pm10 env'], aqdata['pm25 env'], aqdata['pm100 env']))
+        aq_json = {'pm10': aqdata['pm10 env'], 'pm25': aqdata['pm25 env'], 'pm100': aqdata['pm100 env']}
+        client.publish(PM25_TOPIC_JSON, json.dumps(aq_json))
     else:
         print('PM25 device returned None (probably threw exception)')
     timestr = time.strftime("%H:%M:%S")
