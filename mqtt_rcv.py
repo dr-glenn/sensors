@@ -4,6 +4,15 @@ import time
 import random
 import paho.mqtt.client as paho
 import myconfig as cfg
+import logging
+from logging.handlers import RotatingFileHandler,TimedRotatingFileHandler
+
+logger = logging.getLogger(__name__)
+defFormatter = logging.Formatter('%(levelname)s: %(message)s')
+#fileHandler = RotatingFileHandler('mqtt_rcv.log', maxBytes=50000, backupCount=3)
+fileHandler = TimedRotatingFileHandler('mqtt_rcv.log', when='midnight', interval=1, backupCount=7)
+logger.addHandler(fileHandler)
+logger.setLevel(logging.INFO)
 
 ANONYMOUS=False
 if ANONYMOUS:
@@ -20,29 +29,34 @@ else:
 
 
 HOME_NAME = 'gn_home'
-SYS_NAME  = 'pi_zero'
+SYS_NAME  = 'gn-pi-zero-1'
 BME_NAME  = 'bme280'
 PM25_NAME = 'pm25'
 
+#DEV_TOPIC = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,'#')
+DEV_TOPIC = '{}/{}/{}'.format(HOME_NAME,'+','+')
 BME_TOPIC  = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,BME_NAME)
 PM25_TOPIC = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,PM25_NAME)
+BME_TOPIC_JSON  = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,BME_NAME+'/J')
+PM25_TOPIC_JSON = '{}/{}/{}'.format(HOME_NAME,SYS_NAME,PM25_NAME+'/J')
 
 # callbacks for mqtt
 def on_connect(client, userdata, flags, rc):
     #print("connected with result code: "+str(rc))
     # subscribe within the on_connect function,
     # so that if connection is lost, subscription will get renewed.
-    client.subscribe(BME_TOPIC)
-    client.subscribe(PM25_TOPIC)
+    client.subscribe(DEV_TOPIC)
+    #client.subscribe(BME_TOPIC_JSON)
+    #client.subscribe(PM25_TOPIC)
     #client.subscribe("$SYS/#")
 
 def on_message(client, userdata, message):
     time.sleep(1)
-    print("received message = %s" %str(message.payload.decode("utf-8")))
+    #print("received message = %s" %str(message.payload.decode("utf-8")))
+    logger.info(str(message.topic)+': '+str(message.payload.decode("utf-8")))
 
 def main(client, broker, port=MQTT_PORT):
     msg_loop = True
-
     #####
     print("connecting to broker %s" %broker)
     client.connect(broker, port)
