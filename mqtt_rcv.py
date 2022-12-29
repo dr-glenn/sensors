@@ -9,6 +9,7 @@ import csv
 import myconfig as cfg
 import logging
 from logging.handlers import RotatingFileHandler,TimedRotatingFileHandler
+from MyLogger import mylogger
 
 '''
 How to write a TimedRotating log file with a header and CSV content?
@@ -25,6 +26,12 @@ fileHandler = TimedRotatingFileHandler('mqtt_rcv.log', when='midnight', interval
 logger.addHandler(fileHandler)
 logger.setLevel(logging.INFO)
 
+# omit pm10 and pm100
+fields = ['time','topic','pm25','temp_f','humidity','pressure']
+# create time-rotating log handler for CSV file with header
+csvFile = 'my_sensors.csv'
+
+"""
 class MyTimedRotatingFileHandler(TimedRotatingFileHandler):
     '''
     Use this class to override doRollover so that a header can be written at the top of the logfile.
@@ -71,7 +78,6 @@ class CsvFormatter(logging.Formatter):
         super().__init__()
         self.fieldnames = fieldnames
         self.output = io.StringIO()
-        #self.writer = csv.writer(self.output, quoting=csv.QUOTE_ALL)
         self.writer = csv.DictWriter(self.output, self.fieldnames, extrasaction='ignore', quoting=csv.QUOTE_ALL)
 
     def format(self, record):
@@ -82,15 +88,11 @@ class CsvFormatter(logging.Formatter):
         self.output.seek(0)
         return data.strip()
 
-# create time-rotating log handler for CSV file with header
-csvFile = 'my_sensors.csv'
 csvHandler = MyTimedRotatingFileHandler(csvFile, when='midnight')
 #form = '%(asctime)s %(name)s %(levelname)s: %(message)s'
 form = '%(message)s'
 csvFormatter = logging.Formatter(form)
 #csvHandler.setFormatter(csvFormatter)
-# omit pm10 and pm100
-fields = ['time','topic','pm25','temp_f','humidity','pressure']
 csvHandler.setFormatter(CsvFormatter(fields))
 
 # create logger
@@ -98,6 +100,10 @@ csvLog = logging.getLogger('MyCSV')
 csvHandler.configureHeaderWriter(fields, csvLog)
 csvLog.addHandler(csvHandler)
 csvLog.setLevel(logging.INFO)
+"""
+
+csvLogger = mylogger.CsvLogger('MyCSV', csvFile, fields)
+csvLog = csvLogger.getLogger('MyCSV')
 
 ANONYMOUS=False
 if ANONYMOUS:
