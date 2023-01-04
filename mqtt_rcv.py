@@ -118,7 +118,6 @@ else:
 #BME_NAME = 'pi_zero/bme280'
 #PM25_NAME = 'pi_zero/pm25'
 
-
 HOME_NAME = 'gn_home'
 SYS_NAME  = 'gn-pi-zero-2'
 BME_NAME  = 'bme280'
@@ -152,7 +151,7 @@ def on_message(client, userdata, message):
     if msg.startswith('{'):
         mydict = json.loads(msg)
         mydict['topic'] = message.topic
-        logger.info(str(mydict))
+        logger.info(json.dumps(mydict))
         csvLog.info(mydict)
     else:
         logger.info(str(message.topic)+': '+str(message.payload.decode("utf-8")))
